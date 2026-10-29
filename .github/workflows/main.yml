@@ -26,26 +26,28 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
 
-      - name: Check project
+      - name: Check project files
         run: |
-          test -f android/settings.gradle.kts || { echo "ERROR: android/settings.gradle.kts missing"; exit 1; }
-          test -f android/build.gradle.kts || { echo "ERROR: android/build.gradle.kts missing"; exit 1; }
-          test -f android/app/build.gradle.kts || { echo "ERROR: android/app/build.gradle.kts missing"; exit 1; }
+          test -f settings.gradle.kts || { echo "ERROR: settings.gradle.kts missing from repository root"; exit 1; }
+          test -f build.gradle.kts || { echo "ERROR: build.gradle.kts missing from repository root"; exit 1; }
 
       - name: Build debug APK
-        run: gradle -p android assembleDebug --stacktrace --no-daemon
+        run: gradle assembleDebug --stacktrace --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: MD-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          
