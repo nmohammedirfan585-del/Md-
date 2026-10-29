@@ -12,6 +12,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout source
@@ -23,38 +24,28 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Find Android SDK
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
 
-      - name: Accept licenses and install SDK
-        run: |
-          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          if [ ! -x "$SDKMANAGER" ]; then
-            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)"
-          fi
-          test -x "$SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses
-          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
 
       - name: Check project
         run: |
-          if [ ! -f gradlew ]; then
-            echo "ERROR: gradlew missing from repository root."
-            exit 1
-          fi
-          if [ ! -d app ]; then
-            echo "ERROR: app folder missing."
-            exit 1
-          fi
-          chmod +x gradlew
+          test -f android/settings.gradle.kts || { echo "ERROR: android/settings.gradle.kts missing"; exit 1; }
+          test -f android/build.gradle.kts || { echo "ERROR: android/build.gradle.kts missing"; exit 1; }
+          test -f android/app/build.gradle.kts || { echo "ERROR: android/app/build.gradle.kts missing"; exit 1; }
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: gradle -p android assembleDebug --stacktrace --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: MD-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
-          
