@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MD</string>
+    <string name="a11y_desc">Lets MD press the Home and Back buttons when you ask. MD does not read your screen.</string>
+</resources>
